@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+/* 手機／窄螢幕：兩位玩家改成上下堆疊。預設（寬螢幕）是左右分屏。 */
+@custom-variant stacked (@media (max-width: 760px), (max-aspect-ratio: 1/1));
+
+/* ---------- 設計 token：顏色、字型、動畫曲線與所有動畫 ---------- */
+@theme {
+    --color-bg: #120c14;
+    --color-bg-2: #1d1322;
+    --color-pink: #ff66aa;
+    --color-pink-2: #ff3d8b;
+    --color-good: #5be39a;
+    --color-bad: #ff5a6e;
+    --color-ink: #f6eef8;
+    --color-muted: #a99bb0;
+
+    --font-sans: 'Outfit', system-ui, sans-serif;
+
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-smooth: cubic-bezier(0.65, 0, 0.35, 1);
+
+    /* 進場一律用 backwards：動畫結束後不再鎖住 transform，
+       這樣視差、傾斜這些用 transform 的效果才不會被動畫蓋掉。
+       退場用 forwards：淡出後維持透明，直到元素被移除。 */
+    --animate-fade-in: fade-in 0.5s ease-out backwards;
+    --animate-fade-out: fade-out 0.3s ease-in forwards;
+    --animate-rise: rise 0.8s var(--ease-out-expo) backwards;
+    --animate-scale-in: scale-in 0.6s var(--ease-out-expo) backwards;
+    --animate-scale-out: scale-out 0.3s ease-in forwards;
+    --animate-pop: pop 0.5s var(--ease-out-expo) backwards;
+    --animate-bounce-in: bounce-in 0.55s var(--ease-out-expo);
+    --animate-shake: shake 0.5s;
+    --animate-flash: flash 0.9s ease-out forwards;
+    --animate-breathe: breathe 1.6s ease-in-out infinite;
+    --animate-ring: ring-pulse 4.5s ease-in-out infinite;
+
+    @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
+    @keyframes rise {
+        from { opacity: 0; transform: translateY(24px); }
+        to { opacity: 1; transform: none; }
+    }
+    @keyframes scale-in {
+        from { opacity: 0; transform: translateY(30px) scale(0.94); }
+        to { opacity: 1; transform: none; }
+    }
+    @keyframes scale-out {
+        from { opacity: 1; transform: none; }
+        to { opacity: 0; transform: translateY(20px) scale(0.96); }
+    }
+    @keyframes pop {
+        from { opacity: 0.4; transform: scale(1.6); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes bounce-in {
+        0% { transform: scale(0.5); }
+        60% { transform: scale(1.25); }
+        100% { transform: scale(1); }
+    }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-9px); }
+        40%, 80% { transform: translateX(9px); }
+    }
+    @keyframes flash { from { opacity: 1; } to { opacity: 0; } }
+    @keyframes breathe {
+        0%, 100% { opacity: 0.6; transform: scale(0.96); }
+        50% { opacity: 1; transform: scale(1.04); }
+    }
+    @keyframes ring-pulse {
+        0%, 100% { transform: scale(0.94); opacity: 0.6; }
+        50% { transform: scale(1.06); opacity: 1; }
+    }
+}
+
+/* 使用者的系統有開「減少動態效果」（Windows：設定 → 協助工具 → 視覺效果 → 動畫效果 關閉）時：
+   位移、縮放、彈跳、視差、無限循環的裝飾動畫全部拿掉，只保留淡入淡出，
+   所以每個元素仍然是「淡入」而不是突然出現。
+   注意：絕對不能用「把 animation-duration 設成 0.01ms」這種寫法，
+   無限循環的動畫會因此每秒重複幾萬次，看起來就是瘋狂抽動。 */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --animate-rise: fade-in 0.5s ease-out backwards;
+        --animate-scale-in: fade-in 0.5s ease-out backwards;
+        --animate-scale-out: fade-out 0.3s ease-in forwards;
+        --animate-pop: fade-in 0.4s ease-out backwards;
+        --animate-bounce-in: none;
+        --animate-shake: none;
+        --animate-breathe: none;
+        --animate-ring: none;
+    }
+}
+
+/* ---------- 基礎樣式 ---------- */
+@layer base {
+    html, body, #root { height: 100%; }
+    html { color-scheme: dark; }
+    body {
+        @apply overflow-hidden bg-bg font-sans text-ink antialiased select-none;
+    }
+    button, a { cursor: pointer; }
+    button:disabled { cursor: default; }
+    :focus-visible { outline: 2px solid var(--color-pink); outline-offset: 3px; }
+}
+
+/* ---------- 常用的組合 ---------- */
+
+/* 毛玻璃：半透明底、細邊框、背景模糊 */
+@utility glass {
+    background: rgb(255 255 255 / 0.07);
+    border: 1px solid rgb(255 255 255 / 0.12);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+@utility scroll-dark {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.25) transparent;
+}
