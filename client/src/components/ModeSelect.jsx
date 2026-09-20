@@ -4,8 +4,6 @@ import { MODES, MODE_KEYS, POOLS, POOL_KEYS, DEFAULT_POOL, loadBest } from '../m
 import Segmented from './Segmented.jsx';
 import UserChip from './UserChip.jsx';
 
-const ICONS = { playCount: '🎯', accuracy: '🎚️', playtime: '⏱️' };
-
 // 只有真的有滑鼠、且沒有開「減少動態效果」時，卡片才會跟著游標傾斜。
 const canTilt = () =>
     window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
@@ -50,7 +48,6 @@ function ModeCard({ index, mode, best, onPlay }) {
                 className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                 style={{ background: 'radial-gradient(260px circle at var(--gx, 50%) var(--gy, 50%), rgba(255,102,170,0.24), transparent 65%)' }}
             />
-            <span className="relative mb-1.5 text-[34px]">{ICONS[mode]}</span>
             <span className="relative text-[22px] font-bold">{MODES[mode].label}</span>
             <span className="relative text-sm leading-normal text-muted">{MODES[mode].desc}</span>
             <span className="relative mt-auto pt-2.5 text-[13px] text-muted">

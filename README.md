@@ -23,8 +23,8 @@ npm run dev      # Worker + 本機 D1，http://localhost:3000
 npm run client   # Vite 前端，http://localhost:5173（/api 會轉發到 3000）
 ```
 
-osu! 登入需要在你的 OAuth 應用程式（https://osu.ppy.sh/home/account/edit）的 Callback URLs 加入
-`http://localhost:3000/api/auth/callback`。
+osu! 登入需要一個 OAuth 應用程式：到 [osu! 帳號設定頁](https://osu.ppy.sh/home/account/edit) 的 OAuth 區塊建立，
+並在 Callback URLs 加入 `http://localhost:3000/api/auth/callback`。
 
 ## 管理玩家資料
 
