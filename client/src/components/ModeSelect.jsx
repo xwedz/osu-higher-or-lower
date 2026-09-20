@@ -79,6 +79,7 @@ export default function ModeSelect({ state = 'open', user, onLogout, pool, onPoo
         return {
             key,
             label: POOLS[key].label,
+            tone: POOLS[key].tone,
             sub: unavailable ? 'Coming soon' : POOLS[key].desc,
             disabled: unavailable,
             title: unavailable ? 'Coming soon' : POOLS[key].desc,
@@ -140,12 +141,23 @@ export default function ModeSelect({ state = 'open', user, onLogout, pool, onPoo
                 ))}
             </div>
 
-            <button
-                className="relative animate-rise rounded-xl px-3 py-2 text-sm text-muted transition-colors [animation-delay:550ms] hover:bg-white/8 hover:text-ink"
-                onClick={() => onShowLeaderboard({ mode: MODE_KEYS[0], pool })}
-            >
-                🏆 Leaderboard
-            </button>
+            <div className="relative flex animate-rise items-center gap-1 [animation-delay:550ms]">
+                <button
+                    className="rounded-xl px-3 py-2 text-sm text-muted transition-colors hover:bg-white/8 hover:text-ink"
+                    onClick={() => onShowLeaderboard({ mode: MODE_KEYS[0], pool })}
+                >
+                    🏆 Leaderboard
+                </button>
+                <a
+                    href="https://osu.ppy.sh/users/7452418"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="The developer's osu! profile"
+                    className="rounded-xl px-3 py-2 text-sm text-muted transition-colors hover:bg-white/8 hover:text-ink"
+                >
+                    Dev
+                </a>
+            </div>
         </main>
     );
 }

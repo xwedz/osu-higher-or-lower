@@ -95,7 +95,7 @@ export default function Leaderboard({ state = 'open', initialMode, initialPool, 
                     ariaLabel="Player pool"
                     value={pool}
                     onChange={setPool}
-                    options={POOL_KEYS.map(k => ({ key: k, label: POOLS[k].label }))}
+                    options={POOL_KEYS.map(k => ({ key: k, label: POOLS[k].label, tone: POOLS[k].tone }))}
                 />
 
                 {/* 固定最小高度，切換分頁時視窗不會忽大忽小 */}

@@ -23,7 +23,7 @@ export const MODES = {
 export const MODE_KEYS = Object.keys(MODES);
 
 export const POOLS = {
-    famous: { label: 'Famous', desc: 'Well-known players' },
+    famous: { label: 'Famous', desc: 'Well-known players', tone: 'gold' },
     top100: { label: 'Top 100', desc: 'Global top 100' },
     top1000: { label: 'Top 1000', desc: 'Global top 1000' },
 };

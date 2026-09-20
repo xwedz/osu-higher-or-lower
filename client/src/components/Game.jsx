@@ -155,7 +155,10 @@ export default function Game({ state = 'open', mode, pool, onExit, onShowLeaderb
                 </button>
                 <div className="flex flex-col items-center justify-self-center rounded-[22px] border border-white/12 bg-bg/55 px-6.5 pt-2 pb-2.5 leading-[1.05] backdrop-blur-lg stacked:px-4.5 stacked:pt-1.5 stacked:pb-2">
                     <span className="text-xs tracking-[2px] whitespace-nowrap text-muted stacked:text-[11px] stacked:tracking-[1px]">
-                        {meta.label} · {POOLS[pool].label}
+                        {meta.label} ·{' '}
+                        <span className={POOLS[pool].tone === 'gold' ? 'text-[#ffd06b] drop-shadow-[0_0_8px_rgba(255,184,77,0.6)]' : ''}>
+                            {POOLS[pool].label}
+                        </span>
                     </span>
                     <span key={streak} className="animate-pop text-[40px] font-extrabold tabular-nums text-pink stacked:text-[30px]">
                         {streak}
