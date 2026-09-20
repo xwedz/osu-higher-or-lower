@@ -2,6 +2,10 @@
 
 async function parse(res) {
     const data = await res.json().catch(() => ({}));
+    if (res.status === 429) {
+        // 我們自己的頻率限制會帶訊息；Cloudflare 每日額度用完時回的 429 沒有 JSON 內容。
+        throw new Error(data.error || 'The site is very busy right now. Please try again in a while.');
+    }
     if (!res.ok) throw new Error(data.error || `Server error (${res.status})`);
     return data;
 }

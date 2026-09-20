@@ -1,15 +1,17 @@
 // scripts/fetchTopPlayers.js
 //
-// 抓取 osu! 全球 pp 排行榜的前 N 名玩家，存進 Player 表。
-// 這支腳本是獨立執行的（不是伺服器的一部分），手動跑一次，或之後排程
+// 抓取 osu! 全球 pp 排行榜的前 N 名玩家，寫進 D1 的 Player 表。
+// 這支腳本是獨立執行的（不是 Worker 的一部分），手動跑一次，或之後排程
 // 定期執行即可 —— 不應該讓玩家連進遊戲時才現抓，那樣既慢又浪費 API 額度。
 //
-// 用法： node scripts/fetchTopPlayers.js
+// 用法：
+//   node scripts/fetchTopPlayers.js            寫進本機的 D1
+//   node scripts/fetchTopPlayers.js --remote   寫進線上的 D1
+//
+// 線上的 Worker 會把玩家名單快取 10 分鐘，所以重跑後最多 10 分鐘才會生效。
 
-import { PrismaClient } from '@prisma/client';
 import { getToken, apiGet, sleep, toPlayerFields } from './osuApi.js';
-
-const prisma = new PrismaClient();
+import { applySql, upsertPlayerSql } from './d1.js';
 
 const MODE = 'osu';           // 先只做 osu!standard 模式
 const RANKING_TYPE = 'performance'; // 依 pp 排序的排行榜
@@ -21,7 +23,9 @@ async function main() {
     const token = await getToken();
 
     const totalPages = Math.ceil(TARGET_PLAYER_COUNT / PLAYERS_PER_PAGE);
-    let savedCount = 0;
+    // 先清掉一般玩家的舊排名：這次沒有再出現在榜上的人（掉出前 1000 名），
+    // 就不該繼續留在 Top 100 / Top 1000 玩家池裡。知名玩家的排名由 fetchFamousPlayers 負責更新，這裡不動。
+    const statements = [`UPDATE "Player" SET "globalRank" = NULL WHERE "isSpecial" = 0;`];
 
     for (let page = 1; page <= totalPages; page++) {
         console.log(`📄 正在抓第 ${page}/${totalPages} 頁...`);
@@ -29,29 +33,21 @@ async function main() {
 
         for (const entry of data.ranking) {
             // entry 本身就是 UserStatistics（底線命名），玩家基本資料在 entry.user。
-            const fields = toPlayerFields({ user: entry.user, stats: entry });
             // 注意這裡不碰 isSpecial 跟 note：知名玩家可能同時也在排行榜裡，
             // 更新資料時不能把手動維護的欄位洗掉。
-            await prisma.player.upsert({
-                where: { osuUserId: entry.user.id },
-                update: fields,
-                create: { osuUserId: entry.user.id, ...fields, isSpecial: false },
-            });
-            savedCount++;
+            const fields = { osuUserId: entry.user.id, ...toPlayerFields({ user: entry.user, stats: entry }) };
+            statements.push(upsertPlayerSql(fields));
         }
 
         // 禮貌性地在每次請求之間留點間隔，避免短時間內對 osu! 發太密集的請求。
         await sleep(300);
     }
 
-    console.log(`✅ 完成！共寫入/更新了 ${savedCount} 位玩家。`);
+    applySql(statements);
+    console.log(`✅ 完成！共處理了 ${statements.length - 1} 位玩家。`);
 }
 
-main()
-    .catch(err => {
-        console.error('❌ 執行失敗:', err);
-        process.exitCode = 1;
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-    });
+main().catch(err => {
+    console.error('❌ 執行失敗:', err);
+    process.exitCode = 1;
+});

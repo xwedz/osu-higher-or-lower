@@ -1,0 +1,45 @@
+{
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "name": "osu-higher-lower",
+    "main": "src/index.js",
+    "compatibility_date": "2026-09-01",
+    // node:crypto（簽章用的 HMAC）需要這個旗標
+    "compatibility_flags": ["nodejs_compat"],
+
+    // 前端（client/dist）由 Cloudflare 直接提供，靜態檔案免費且不計入請求額度。
+    // 只有 /api/* 會執行 Worker；其他路徑找不到檔案時回傳 index.html（單頁應用程式）。
+    "assets": {
+        "directory": "./client/dist",
+        "not_found_handling": "single-page-application",
+        "run_worker_first": ["/api/*"]
+    },
+
+    "d1_databases": [
+        {
+            "binding": "DB",
+            "database_name": "osu-higher-lower",
+            // 執行 `npx wrangler d1 create osu-higher-lower` 後，把它印出的 database_id 填在這裡。
+            // 本機開發（--local）不會用到這個值，所以先留著佔位也能跑。
+            "database_id": "b81e2b6c-9f0b-46ca-8abf-159e11103f41",
+            "migrations_dir": "migrations"
+        }
+    ],
+
+    // 每個 IP 的頻率限制（Workers Rate Limiting binding）。
+    // 一般玩家一分鐘最多幾十個請求，100 次已經很寬鬆；這個機制是「按資料中心分別計算、寬鬆」的，
+    // 擋得住單一來源猛刷，但不是精準的總量控制。period 只能是 10 或 60 秒。
+    "ratelimits": [
+        {
+            "name": "API_LIMITER",
+            "namespace_id": "1001",
+            "simple": { "limit": 100, "period": 60 }
+        }
+    ],
+
+    // 每天清一次過期的 UsedToken
+    "triggers": { "crons": ["17 4 * * *"] }
+
+    // 機密值（OSU_CLIENT_ID、OSU_CLIENT_SECRET、ROUND_TOKEN_SECRET）不要寫在這裡：
+    //   本機：放在 .dev.vars（已加入 .gitignore）
+    //   線上：npx wrangler secret put OSU_CLIENT_ID  （其他兩個同理）
+}
