@@ -4,6 +4,7 @@
   "description": "osu! 玩家數值 Higher or Lower 猜謎遊戲（Cloudflare Workers + D1）",
   "main": "src/index.js",
   "type": "module",
+  "license": "AGPL-3.0-only",
   "scripts": {
     "dev": "wrangler dev --port 3000",
     "client": "npm --prefix client run dev",

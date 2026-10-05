@@ -2,6 +2,8 @@
 
 猜猜看下一位 osu! 玩家的數值（遊玩次數、準確率、遊玩時數）比較高還是比較低。
 
+**線上遊玩：<https://osu-higher-lower.law5616583.workers.dev>**
+
 - 前端：React + Vite + Tailwind（`client/`）
 - 後端：Cloudflare Worker + Hono（`src/`），資料庫是 Cloudflare D1（SQLite）
 - 前端與 API 由同一個 Worker 提供，同一個網址
@@ -99,3 +101,12 @@ scripts/        抓取玩家資料的腳本
 client/         React 前端
 wrangler.jsonc  Cloudflare 設定
 ```
+
+## 授權
+
+本專案的程式碼以 [GNU Affero General Public License v3.0](LICENSE)（AGPL-3.0）授權。
+簡單來說：你可以使用、修改、散布這份程式碼，包括商業用途；但如果你散布修改後的版本，
+或把修改後的版本架設成網站讓其他人透過網路使用，就必須以同樣的 AGPL-3.0 授權公開完整原始碼。
+
+玩家資料與頭像來自 [osu!](https://osu.ppy.sh/) 官方 API，屬於 osu! / ppy，不在本授權範圍內，
+使用上請遵守 osu! 的 API 使用條款。本專案與 osu! 及 ppy 沒有任何官方關係。
