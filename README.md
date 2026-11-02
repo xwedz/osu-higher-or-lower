@@ -2,7 +2,7 @@
 
 猜猜看下一位 osu! 玩家的數值（遊玩次數、準確率、遊玩時數）比較高還是比較低。
 
-**線上遊玩：<https://osu-higher-lower.law5616583.workers.dev>**
+**線上遊玩：<https://osuhigherlower.xwedz.dev>**
 
 - 前端：React + Vite + Tailwind（`client/`）
 - 後端：Cloudflare Worker + Hono（`src/`），資料庫是 Cloudflare D1（SQLite）
@@ -77,7 +77,7 @@ npx wrangler d1 execute osu-higher-lower --remote --command "UPDATE Player SET i
 
 ## 免費方案的限制
 
-- Worker：每天 10 萬次請求；每次請求 CPU 10ms。前端靜態檔案不計入。
+- Worker：每天 10 萬次請求；每次請求 CPU 10ms。為了讓舊網址能轉址，所有請求都先經過 Worker，所以前端靜態檔案也會計入。
 - D1：每天讀 500 萬列、寫 10 萬列。每次猜測會寫入 1 筆（防重放），所以約每天 10 萬次猜測上限。
 - 超過額度時 API 會回錯誤，隔天（UTC 零點）重置。需要時可升級 Workers Paid（US$5/月）。
 

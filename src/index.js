@@ -1,6 +1,7 @@
 // src/index.js —— Cloudflare Worker 入口（Hono）
 //
-// 只處理 /api/*（wrangler.jsonc 的 run_worker_first）；前端頁面由 Cloudflare 直接提供。
+// 所有請求都會先經過這裡（wrangler.jsonc 的 run_worker_first）：/api/* 由下面的路由處理，
+// 其他路徑交給 ASSETS 回傳前端檔案。
 
 import { Hono } from 'hono';
 import auth from './auth.js';
@@ -15,6 +16,17 @@ const app = new Hono();
 const ALLOWED_MODES = ['playCount', 'accuracy', 'playtime'];
 
 const invalidParam = (name, allowed) => ({ error: `${name} must be one of: ${allowed.join(', ')}` });
+
+// 把舊的 workers.dev 頁面網址轉到正式網址，保留原本的路徑和參數。
+// /api/* 刻意不轉址：還開著舊分頁的玩家要能打完這一局，跨網域轉址 API 請求會被瀏覽器的 CORS 擋下。
+app.use('*', async (c, next) => {
+    const url = new URL(c.req.url);
+    const canonical = c.env.CANONICAL_ORIGIN;
+    if (canonical && url.hostname.endsWith('.workers.dev') && !url.pathname.startsWith('/api/')) {
+        return c.redirect(`${canonical}${url.pathname}${url.search}`, 301);
+    }
+    await next();
+});
 
 // 頻率限制：依來源 IP 計算。被擋下的請求會在碰到資料庫之前就回 429。
 // 注意被擋下的請求仍然是一次 Worker 呼叫，所以這個機制保護的是資料庫與 CPU，
@@ -265,7 +277,13 @@ app.get('/api/leaderboard', async c => {
     });
 });
 
-app.notFound(c => c.json({ error: 'Not found' }, 404));
+// 沒有對應路由時：API 回 JSON 的 404；其他路徑交給 ASSETS，
+// 它會回傳對應的前端檔案，找不到就回 index.html（not_found_handling）。
+app.notFound(c => (
+    new URL(c.req.url).pathname.startsWith('/api/')
+        ? c.json({ error: 'Not found' }, 404)
+        : c.env.ASSETS.fetch(c.req.raw)
+));
 
 app.onError((err, c) => {
     console.error('請求處理失敗:', err);

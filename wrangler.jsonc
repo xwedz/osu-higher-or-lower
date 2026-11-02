@@ -6,12 +6,22 @@
     // node:crypto（簽章用的 HMAC）需要這個旗標
     "compatibility_flags": ["nodejs_compat"],
 
-    // 前端（client/dist）由 Cloudflare 直接提供，靜態檔案免費且不計入請求額度。
-    // 只有 /api/* 會執行 Worker；其他路徑找不到檔案時回傳 index.html（單頁應用程式）。
+    // 正式網址。舊的 workers.dev 網址要繼續開著，才能把舊連結（例如 Reddit 貼文）轉址過來；
+    // 有設定 routes 時 workers_dev 可能被推定為 false，所以這裡明確設定。
+    "routes": [{ "pattern": "osuhigherlower.xwedz.dev", "custom_domain": true }],
+    "workers_dev": true,
+
+    // 從 workers.dev 轉址的目標。fork 這個專案的人請改成自己的網址，或拿掉這個設定以停用轉址。
+    "vars": { "CANONICAL_ORIGIN": "https://osuhigherlower.xwedz.dev" },
+
+    // 前端（client/dist）。所有請求都先經過 Worker，舊網址的首頁才能被轉址；
+    // 代價是靜態檔案的請求也會計入 Worker 的每日額度。
+    // 其他路徑找不到檔案時回傳 index.html（單頁應用程式）。
     "assets": {
         "directory": "./client/dist",
+        "binding": "ASSETS",
         "not_found_handling": "single-page-application",
-        "run_worker_first": ["/api/*"]
+        "run_worker_first": true
     },
 
     "d1_databases": [
