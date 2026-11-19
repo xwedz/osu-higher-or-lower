@@ -1,10 +1,10 @@
 // src/session.js
 //
-// 登入狀態存在「簽章 cookie」裡，伺服器不用記住任何 session，
-// 跟 roundToken 是同樣的精神：內容明文、靠簽章防竄改。
-// 好處是換到任何雲端環境（多實例、無伺服器）都不用改動。
+// Login state lives in a signed cookie, so the server stores no sessions.
+// Same idea as roundToken: the content is plain text and the signature prevents tampering.
+// Because of that it keeps working in any hosting setup (many instances, serverless) without changes.
 //
-// cookie 只放公開資訊（osu! id、名字、國家），不放任何 osu! 的 access token。
+// The cookie only holds public information (osu! id, username, country), never an osu! access token.
 
 import crypto from 'node:crypto';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
@@ -13,9 +13,9 @@ const SESSION_COOKIE = 'osu_session';
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 function mac(secret, purpose, data) {
-    if (!secret) throw new Error('缺少 ROUND_TOKEN_SECRET');
-    // purpose 一起放進簽章：不同用途（登入狀態、OAuth state）的值不能互相冒用，
-    // 也跟 roundToken 的簽章分得開。
+    if (!secret) throw new Error('ROUND_TOKEN_SECRET is not set');
+    // The purpose is part of the signature, so values for one use (login session, OAuth state)
+    // can't be passed off as another, and they never collide with roundToken signatures.
     return crypto.createHmac('sha256', secret).update(`${purpose}.${data}`).digest('base64url');
 }
 
@@ -45,13 +45,13 @@ export function unseal(secret, purpose, value) {
 
 const cookieOptions = (c, ttlMs) => ({
     httpOnly: true,
-    // lax：從 osu! 授權頁導回來（頂層 GET 導覽）時瀏覽器會帶上 cookie，
-    // 但其他網站發起的跨站 POST 不會帶，等於順便擋掉 CSRF。
+    // Lax: the browser sends the cookie when osu! redirects back (a top-level GET navigation),
+    // but not on cross-site POSTs from other sites, which also blocks CSRF.
     sameSite: 'Lax',
-    // 只有走 https 時才加 Secure（本機開發是 http）。
+    // Only add Secure over https (local development runs on http).
     secure: new URL(c.req.url).protocol === 'https:',
     path: '/',
-    maxAge: Math.floor(ttlMs / 1000), // Hono 的單位是秒
+    maxAge: Math.floor(ttlMs / 1000), // Hono expects seconds
 });
 
 export function setSealedCookie(c, name, purpose, payload, ttlMs) {
@@ -74,7 +74,7 @@ export function endSession(c) {
     clearSealedCookie(c, SESSION_COOKIE);
 }
 
-/** 回傳目前登入的使用者 { osuUserId, username, countryCode, countryName }，沒登入就是 null。 */
+/** Returns the logged-in user { osuUserId, username, countryCode, countryName }, or null. */
 export function getSessionUser(c) {
     const payload = readSealedCookie(c, SESSION_COOKIE, 'session');
     if (!payload || !Number.isInteger(payload.osuUserId)) return null;

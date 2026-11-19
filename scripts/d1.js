@@ -1,11 +1,12 @@
 // scripts/d1.js
 //
-// 抓取腳本共用：把玩家資料轉成 SQL，再交給 wrangler 寫進 D1。
-// 預設寫進「本機」的 D1（wrangler dev 使用的那一份）；加上 --remote 才會寫進 Cloudflare 上的線上資料庫。
+// Shared by the fetch scripts: turns player data into SQL and hands it to wrangler to write into D1.
+// Writes to the local D1 (the one wrangler dev uses) by default; pass --remote to write to the
+// live database on Cloudflare.
 //
-// 用法：
-//   node scripts/fetchTopPlayers.js            寫進本機
-//   node scripts/fetchTopPlayers.js --remote   寫進線上
+// Usage:
+//   node scripts/fetchTopPlayers.js            write to the local database
+//   node scripts/fetchTopPlayers.js --remote   write to the live database
 
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -19,7 +20,7 @@ const OUT_DIR = path.join(ROOT, 'scripts', '.out');
 
 export const isRemote = () => process.argv.includes('--remote');
 
-/** 把 JS 值轉成 SQL 字面值（字串會跳脫單引號）。 */
+/** Converts a JS value into an SQL literal (single quotes in strings are escaped). */
 export function sql(value) {
     if (value === null || value === undefined) return 'NULL';
     if (typeof value === 'number') return Number.isFinite(value) ? String(value) : 'NULL';
@@ -28,8 +29,9 @@ export function sql(value) {
 }
 
 /**
- * 新增或更新一位玩家。extraSet 是額外要在「已存在時」更新的欄位（例如 isSpecial、note）。
- * 抓取排行榜時不傳 extra，這樣就不會洗掉手動維護的 isSpecial / note。
+ * Inserts or updates one player. `extra` holds additional columns to set, also when the row
+ * already exists (for example isSpecial and note). The leaderboard fetch passes no extra,
+ * so it never overwrites the hand-maintained isSpecial / note values.
  */
 export function upsertPlayerSql(fields, extra = {}) {
     const all = { ...fields, ...extra };
@@ -41,15 +43,16 @@ export function upsertPlayerSql(fields, extra = {}) {
     );
 }
 
-/** 把一批 SQL 語句寫成檔案，用 wrangler 套用到本機或線上的 D1。 */
+/** Writes a batch of SQL statements to a file and applies it to the local or live D1 with wrangler. */
 export function applySql(statements) {
     fs.mkdirSync(OUT_DIR, { recursive: true });
     const file = path.join(OUT_DIR, `sync-${Date.now()}.sql`);
     fs.writeFileSync(file, statements.join('\n') + '\n', 'utf-8');
 
     const target = isRemote() ? '--remote' : '--local';
-    console.log(`💾 正在寫入 D1（${isRemote() ? '線上' : '本機'}）：${statements.length} 條語句`);
-    // 直接用 node 執行 wrangler 的入口檔，不經過 shell（Windows 上 npx 需要 shell，會有安全性警告）。
+    console.log(`💾 Writing to D1 (${isRemote() ? 'remote' : 'local'}): ${statements.length} statements`);
+    // Run wrangler's entry file with node directly instead of through a shell
+    // (npx needs a shell on Windows, which triggers a security warning).
     const wrangler = path.join(ROOT, 'node_modules', 'wrangler', 'bin', 'wrangler.js');
     execFileSync(process.execPath, [wrangler, 'd1', 'execute', DB_NAME, target, '--file', file], {
         cwd: ROOT,

@@ -1,7 +1,8 @@
 import React from 'react';
 
-// 每個選項可以指定色調：預設是粉紅；gold 用在 Famous 玩家池，讓它跟一般的玩家池一眼就分得出來。
-// （Tailwind 只會產生「完整寫在程式碼裡」的 class，所以這裡不能用字串拼接。）
+// Each option can set a tone: pink by default; gold is used for the Famous pool so it stands out
+// from the regular pools at a glance. (Tailwind only generates classes written out in full in the
+// source, so these can't be built by string concatenation.)
 const TONES = {
     pink: {
         fill: 'from-pink to-pink-2 shadow-[0_6px_20px_rgba(255,61,139,0.35)]',
@@ -13,14 +14,15 @@ const TONES = {
         fill: 'from-[#ffe08a] to-[#ffa63d] shadow-[0_6px_28px_rgba(255,184,77,0.55)]',
         on: 'text-[#3d2600]',
         off: 'text-[#ffd06b] enabled:hover:text-[#ffe9b0]',
-        // 沒被選中時也帶一圈淡淡的金色光暈
+        // a faint gold glow even when not selected
         idle: 'shadow-[0_0_18px_rgba(255,184,77,0.22)] ring-1 ring-[#ffd06b]/30',
     },
 };
 
 /**
- * 分段選擇器（玩家池、排行榜分頁共用）。
- * 選中的粉紅底是一層獨立的元素、用淡入淡出切換，所以換選項時是柔順的過渡而不是瞬間跳色。
+ * Segmented control (shared by the player pool picker and the leaderboard tabs).
+ * The highlighted background is a separate layer that fades in and out, so switching options
+ * transitions smoothly instead of snapping to a new color.
  */
 export default function Segmented({ options, value, onChange, ariaLabel, className = '' }) {
     return (

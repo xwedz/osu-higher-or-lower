@@ -1,7 +1,7 @@
 {
   "name": "osu-higherlower",
   "version": "0.1.0",
-  "description": "osu! 玩家數值 Higher or Lower 猜謎遊戲（Cloudflare Workers + D1）",
+  "description": "Higher or Lower guessing game with osu! player stats (Cloudflare Workers + D1)",
   "main": "src/index.js",
   "type": "module",
   "license": "AGPL-3.0-only",

@@ -1,14 +1,15 @@
 // src/players.js
 //
-// 玩家候選池與「隨機挑人」。
+// Player pools and random picking.
 //
-// 為什麼把整張 Player 表快取在記憶體裡：D1 是按「掃描的列數」計費（免費每天 500 萬列），
-// 如果每次猜測都用 COUNT + OFFSET 去資料庫挑人，每次要掃上千列，很快就用完額度。
-// 整張表才 1000 多列，每個 Worker 實例每 10 分鐘讀一次放在記憶體裡就夠了，
-// 之後的挑人、比大小全部不碰資料庫。代價是：重新跑抓取腳本後，
-// 線上的資料最多要 10 分鐘才會更新。
+// Why the whole Player table is cached in memory: D1 bills by rows scanned (5 million per day on the
+// free plan). Picking a player with COUNT + OFFSET on every guess would scan over a thousand rows each
+// time and use up the quota quickly. The table only has about a thousand rows, so each Worker instance
+// loads it once every 10 minutes, and picking and comparing players never touches the database after
+// that. The trade-off: after re-running the fetch scripts, the live site can take up to 10 minutes
+// to see the new data.
 
-// 玩家池：決定這一局的候選玩家從哪裡挑。排名是抓取當下的快照。
+// Player pools decide which players a run draws from. Ranks are a snapshot from the last fetch.
 export const POOLS = {
     famous: p => p.isSpecial === 1,
     top100: p => p.globalRank != null && p.globalRank <= 100,
@@ -16,7 +17,7 @@ export const POOLS = {
 };
 export const ALLOWED_POOLS = Object.keys(POOLS);
 
-// 一個池至少要有這麼多玩家才開放遊玩，人太少的話幾輪就會一直重複遇到同樣的人。
+// A pool needs at least this many players to be playable; with fewer, the same faces keep coming back.
 export const MIN_POOL_SIZE = 10;
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
@@ -33,7 +34,7 @@ export async function loadPlayers(db) {
 export const poolPlayers = (players, pool) => players.filter(POOLS[pool]);
 
 /**
- * 在指定玩家池裡隨機挑一位玩家，可以指定要排除的 id（避免兩邊選到同一個人）。
+ * Picks a random player from the pool, optionally excluding one id (so both sides aren't the same player).
  */
 export function pickRandomPlayer(players, pool, excludeId = null) {
     const candidates = poolPlayers(players, pool).filter(p => p.osuUserId !== excludeId);
@@ -44,8 +45,8 @@ export function pickRandomPlayer(players, pool, excludeId = null) {
 }
 
 /**
- * 玩家卡上要顯示的公開資訊。刻意不包含 mode 對應的數值——
- * 未知方的數值要等提交猜測之後才會揭曉。
+ * Public information shown on a player card. It deliberately leaves out the stat being compared:
+ * the unknown player's value is only revealed after the guess is submitted.
  */
 export function publicInfo(player) {
     return {

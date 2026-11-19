@@ -12,18 +12,18 @@ const LOGIN_ERRORS = {
     error: 'Could not log in with osu! right now, please try again later.',
 };
 
-// 畫面切換時，離開的那個畫面要多留一小段時間播放淡出。
+// When switching screens, the outgoing screen stays a little longer to play its fade-out.
 const SCREEN_EXIT_MS = 350;
 
 export default function App() {
-    // 目前在玩哪個模式；null = 首頁。playId 每次開始遊戲都會 +1，確保重新進入時一定是全新的一局。
+    // The mode being played; null = home screen. id increases on every start so re-entering is always a fresh run.
     const [play, setPlay] = useState({ mode: null, id: 0 });
     const [pool, setPool] = useState(loadPoolPref);
-    const [board, setBoard] = useState(null); // { mode, pool }；null = 排行榜關閉
+    const [board, setBoard] = useState(null); // { mode, pool }; null = leaderboard closed
     const [user, setUser] = useState(null);
     const [notice, setNotice] = useState('');
 
-    // 元件淡出期間，父層的狀態已經變成 null 了，所以要記住「最後一個有值的內容」讓它繼續顯示。
+    // While a component fades out, the parent state is already null, so keep the last non-null value to keep showing it.
     const lastMode = useRef(play.mode);
     if (play.mode) lastMode.current = play.mode;
     const lastBoard = useRef(board);
@@ -39,7 +39,7 @@ export default function App() {
     useEffect(() => {
         fetchMe().then(d => setUser(d.user)).catch(() => {});
 
-        // 登入失敗時後端會導回 /?login=原因，顯示提示後把網址列清乾淨。
+        // A failed login redirects back to /?login=<reason>; show a notice and clean up the address bar.
         const reason = new URLSearchParams(window.location.search).get('login');
         if (reason) {
             setNotice(LOGIN_ERRORS[reason] ?? LOGIN_ERRORS.error);
@@ -54,7 +54,7 @@ export default function App() {
     }, [notice]);
 
     const onLogout = useCallback(async () => {
-        try { await logout(); } catch { return; } // 登出失敗就維持原狀
+        try { await logout(); } catch { return; } // if logout fails, keep the current state
         setUser(null);
     }, []);
 

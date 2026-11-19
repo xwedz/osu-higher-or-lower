@@ -1,6 +1,6 @@
 // scripts/osuApi.js
 //
-// 抓取腳本共用的 osu! API 小工具：取得 token、發請求。
+// Small osu! API helpers shared by the fetch scripts: getting a token and making requests.
 
 import 'dotenv/config';
 
@@ -10,11 +10,11 @@ const CLIENT_SECRET = process.env.OSU_CLIENT_SECRET;
 export const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * 用 client credentials 換一個 token —— 只讀取公開資料，不需要任何使用者登入。
+ * Gets a token with client credentials. It only reads public data, so no user login is needed.
  */
 export async function getToken() {
     if (!CLIENT_ID || !CLIENT_SECRET) {
-        throw new Error('請先在 .env 裡設定 OSU_CLIENT_ID 跟 OSU_CLIENT_SECRET');
+        throw new Error('Set OSU_CLIENT_ID and OSU_CLIENT_SECRET in .env first');
     }
 
     const res = await fetch('https://osu.ppy.sh/oauth/token', {
@@ -29,7 +29,7 @@ export async function getToken() {
     });
 
     if (!res.ok) {
-        throw new Error(`取得 token 失敗 (${res.status}): ${await res.text()}`);
+        throw new Error(`Failed to get a token (${res.status}): ${await res.text()}`);
     }
     return (await res.json()).access_token;
 }
@@ -39,15 +39,15 @@ export async function apiGet(path, token) {
         headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
     });
     if (!res.ok) {
-        throw new Error(`請求 ${path} 失敗 (${res.status}): ${await res.text()}`);
+        throw new Error(`Request to ${path} failed (${res.status}): ${await res.text()}`);
     }
     return res.json();
 }
 
 /**
- * 把「排行榜的一筆資料」或「/users/{id}/osu 的回應」轉成 Player 表的欄位。
- * 兩者的形狀不同：排行榜的 entry 本身就是 UserStatistics（帶巢狀的 user），
- * 而 /users 回應是 user 帶巢狀的 statistics。
+ * Converts a ranking entry or a /users/{id}/osu response into Player table columns.
+ * The two have different shapes: a ranking entry is itself a UserStatistics object with a nested user,
+ * while the /users response is a user with nested statistics.
  */
 export function toPlayerFields({ user, stats }) {
     return {

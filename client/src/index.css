@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
-/* 手機／窄螢幕：兩位玩家改成上下堆疊。預設（寬螢幕）是左右分屏。 */
+/* Phones / narrow screens: the two players stack vertically. The default (wide screens) is side by side. */
 @custom-variant stacked (@media (max-width: 760px), (max-aspect-ratio: 1/1));
 
-/* ---------- 設計 token：顏色、字型、動畫曲線與所有動畫 ---------- */
+/* ---------- Design tokens: colors, fonts, easing curves and every animation ---------- */
 @theme {
     --color-bg: #120c14;
     --color-bg-2: #1d1322;
@@ -19,9 +19,9 @@
     --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-smooth: cubic-bezier(0.65, 0, 0.35, 1);
 
-    /* 進場一律用 backwards：動畫結束後不再鎖住 transform，
-       這樣視差、傾斜這些用 transform 的效果才不會被動畫蓋掉。
-       退場用 forwards：淡出後維持透明，直到元素被移除。 */
+    /* Enter animations use backwards: once finished they no longer hold transform,
+       so transform-based effects such as the card tilt aren't overridden by the animation.
+       Exit animations use forwards: they stay transparent after fading out until the element is removed. */
     --animate-fade-in: fade-in 0.5s ease-out backwards;
     --animate-fade-out: fade-out 0.3s ease-in forwards;
     --animate-rise: rise 0.8s var(--ease-out-expo) backwards;
@@ -73,11 +73,11 @@
     }
 }
 
-/* 使用者的系統有開「減少動態效果」（Windows：設定 → 協助工具 → 視覺效果 → 動畫效果 關閉）時：
-   位移、縮放、彈跳、視差、無限循環的裝飾動畫全部拿掉，只保留淡入淡出，
-   所以每個元素仍然是「淡入」而不是突然出現。
-   注意：絕對不能用「把 animation-duration 設成 0.01ms」這種寫法，
-   無限循環的動畫會因此每秒重複幾萬次，看起來就是瘋狂抽動。 */
+/* When the user's system asks for reduced motion (Windows: Settings → Accessibility → Visual effects →
+   Animation effects off): drop movement, scaling, bouncing and infinite decorative animations and keep
+   only fades, so every element still fades in instead of popping into view.
+   Never "fix" this by setting animation-duration to 0.01ms: infinite animations would then repeat
+   tens of thousands of times per second and visibly jitter. */
 @media (prefers-reduced-motion: reduce) {
     :root {
         --animate-rise: fade-in 0.5s ease-out backwards;
@@ -91,7 +91,7 @@
     }
 }
 
-/* ---------- 基礎樣式 ---------- */
+/* ---------- Base styles ---------- */
 @layer base {
     html, body, #root { height: 100%; }
     html { color-scheme: dark; }
@@ -103,9 +103,9 @@
     :focus-visible { outline: 2px solid var(--color-pink); outline-offset: 3px; }
 }
 
-/* ---------- 常用的組合 ---------- */
+/* ---------- Reusable combinations ---------- */
 
-/* 毛玻璃：半透明底、細邊框、背景模糊 */
+/* Frosted glass: translucent background, thin border, blurred backdrop */
 @utility glass {
     background: rgb(255 255 255 / 0.07);
     border: 1px solid rgb(255 255 255 / 0.12);

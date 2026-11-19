@@ -12,7 +12,7 @@ export const MODES = {
         unit: '%',
     },
     playtime: {
-        // 後端給的是秒，顯示成小時。
+        // The backend returns seconds; shown as hours.
         label: 'Play Time',
         desc: 'Who has spent more time on osu!?',
         format: v => Math.floor(v / 3600).toLocaleString(),
@@ -33,13 +33,13 @@ export const DEFAULT_POOL = 'top1000';
 
 export const avatarUrl = id => `https://a.ppy.sh/${id}`;
 
-// 國旗用圖片而不是 emoji：Windows 不會把國旗 emoji 渲染成旗子，只會顯示成兩個字母。
+// Flags are images rather than emoji: Windows doesn't render flag emoji as flags, only as two letters.
 export const flagUrl = code => `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
 
 const BEST_KEY = 'osu-hol-best-v2';
 const POOL_PREF_KEY = 'osu-hol-pool';
 
-// 最佳連勝依「模式 × 玩家池」分開記錄，不同難度不能混在一起比。
+// Best streaks are stored per mode and pool; different difficulties shouldn't be compared together.
 const bestKey = (mode, pool) => `${mode}:${pool}`;
 
 function loadAllBest() {
@@ -53,7 +53,7 @@ export function saveBest(mode, pool, streak) {
     const key = bestKey(mode, pool);
     if (streak > (all[key] || 0)) {
         all[key] = streak;
-        try { localStorage.setItem(BEST_KEY, JSON.stringify(all)); } catch { /* 隱私模式等情況忽略 */ }
+        try { localStorage.setItem(BEST_KEY, JSON.stringify(all)); } catch { /* ignore, e.g. in private browsing */ }
         return true;
     }
     return false;
@@ -67,5 +67,5 @@ export function loadPoolPref() {
 }
 
 export function savePoolPref(pool) {
-    try { localStorage.setItem(POOL_PREF_KEY, pool); } catch { /* 忽略 */ }
+    try { localStorage.setItem(POOL_PREF_KEY, pool); } catch { /* ignore */ }
 }

@@ -60,7 +60,7 @@ export default function Leaderboard({ state = 'open', initialMode, initialPool, 
 
     const records = data?.records;
     const me = data?.me;
-    // 自己有紀錄、但不在前 10 名時，另外附在最下面。
+    // If you have a record but aren't in the top 10, show your own row at the bottom.
     const meOutside = me && !records?.some(r => r.osuUserId === me.osuUserId);
 
     return (
@@ -98,7 +98,7 @@ export default function Leaderboard({ state = 'open', initialMode, initialPool, 
                     options={POOL_KEYS.map(k => ({ key: k, label: POOLS[k].label, tone: POOLS[k].tone }))}
                 />
 
-                {/* 固定最小高度，切換分頁時視窗不會忽大忽小 */}
+                {/* A fixed minimum height keeps the dialog from resizing when switching tabs */}
                 <div className="min-h-80">
                     {error && <p className="text-muted">{error}</p>}
                     {!error && data === null && (

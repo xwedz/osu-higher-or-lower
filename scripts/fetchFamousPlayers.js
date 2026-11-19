@@ -1,17 +1,18 @@
 // scripts/fetchFamousPlayers.js
 //
-// 依照 scripts/famousPlayers.json 這份你自己維護的名單，逐一向 osu! API 抓玩家資料，
-// 寫進 D1 的 Player 表並標記為 isSpecial（「Famous」玩家池就是這批人）。
+// Fetches every player in scripts/famousPlayers.json (a hand-maintained list) from the osu! API,
+// writes them into the D1 Player table and marks them isSpecial (these players make up the Famous pool).
 //
-// famousPlayers.json 的格式：
-//   [{ "osuUserId": 7562902, "note": "一句話說明，可以留空字串" }, ...]
+// famousPlayers.json format:
+//   [{ "osuUserId": 7562902, "note": "a short description, may be an empty string" }, ...]
 //
-// 想新增玩家：把他的 osu! user id（個人頁面網址最後那串數字）加進 JSON，再重跑一次即可。
-// 已經在名單裡、之後被你移除的玩家，不會被自動刪掉（避免誤刪），想移除請手動處理。
+// To add a player, put their osu! user id (the number at the end of their profile URL) in the JSON
+// and run this script again. Players removed from the list are not deleted automatically
+// (to avoid accidental deletions); remove them by hand.
 //
-// 用法：
-//   node scripts/fetchFamousPlayers.js            寫進本機的 D1
-//   node scripts/fetchFamousPlayers.js --remote   寫進線上的 D1
+// Usage:
+//   node scripts/fetchFamousPlayers.js            write to the local D1
+//   node scripts/fetchFamousPlayers.js --remote   write to the live D1
 
 import fs from 'node:fs';
 import { getToken, apiGet, sleep, toPlayerFields } from './osuApi.js';
@@ -21,13 +22,13 @@ const LIST_PATH = new URL('./famousPlayers.json', import.meta.url);
 
 async function main() {
     const list = JSON.parse(fs.readFileSync(LIST_PATH, 'utf-8'));
-    console.log(`📋 名單共 ${list.length} 位玩家`);
+    console.log(`📋 ${list.length} players in the list`);
 
     const token = await getToken();
     const statements = [];
 
     for (const { osuUserId, note } of list) {
-        // key=id 告訴 API 我們給的是 user id，而不是使用者名稱。
+        // key=id tells the API we are passing a user id, not a username.
         const user = await apiGet(`/users/${osuUserId}/osu?key=id`, token);
         const fields = { osuUserId: user.id, ...toPlayerFields({ user, stats: user.statistics }) };
         statements.push(upsertPlayerSql(fields, { isSpecial: 1, note: note?.trim() || null }));
@@ -36,10 +37,10 @@ async function main() {
     }
 
     applySql(statements);
-    console.log('✅ 完成！');
+    console.log('✅ Done!');
 }
 
 main().catch(err => {
-    console.error('❌ 執行失敗:', err);
+    console.error('❌ Failed:', err);
     process.exitCode = 1;
 });

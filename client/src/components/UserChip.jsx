@@ -3,7 +3,7 @@ import { avatarUrl, flagUrl } from '../modes.js';
 
 const corner = 'absolute right-4.5 top-4.5 z-5 animate-rise [animation-delay:300ms] stacked:right-3 stacked:top-3';
 
-/** 首頁右上角：登入前是 osu! 登入按鈕，登入後顯示自己的頭像、國旗、名字和登出。 */
+/** Top right of the home screen: an osu! login button, or once logged in, your avatar, flag, name and a logout button. */
 export default function UserChip({ user, onLogout }) {
     if (!user) {
         return (

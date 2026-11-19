@@ -1,11 +1,12 @@
 // src/auth.js
 //
-// 用 osu! 的 OAuth（Authorization Code 流程）登入：
-//   1. /api/auth/login    把使用者導去 osu! 的授權頁
-//   2. osu! 導回 /api/auth/callback?code=...&state=...
-//   3. 後端拿 code 換 access token、呼叫 /me 取得身分，然後簽發自己的 session cookie
+// Log in with osu! OAuth (Authorization Code flow):
+//   1. /api/auth/login sends the user to the osu! authorization page
+//   2. osu! redirects back to /api/auth/callback?code=...&state=...
+//   3. The server exchanges the code for an access token, calls /me to get the user's identity,
+//      and issues its own session cookie
 //
-// 我們只用 access token 這一次來讀取 /me，讀完就丟掉，不儲存。
+// The access token is used once to read /me and then discarded; it is never stored.
 
 import crypto from 'node:crypto';
 import { Hono } from 'hono';
@@ -14,13 +15,13 @@ import { clearSealedCookie, endSession, readSealedCookie, setSealedCookie, start
 const STATE_COOKIE = 'osu_oauth_state';
 const STATE_TTL_MS = 10 * 60 * 1000;
 
-// Redirect URI 必須跟 osu! OAuth 應用程式設定裡登記的完全一致。
-// 沒有設定 OSU_REDIRECT_URI 時，就用「目前這個網站自己的網址」——部署後前後端同一個網址，
-// 不需要另外設定。本機開發時前端在 Vite (5173)、API 在 wrangler (3000)，
-// 所以在 .dev.vars 裡明確指定。
+// The redirect URI must exactly match one registered in the osu! OAuth application.
+// Without OSU_REDIRECT_URI we use this site's own origin; in production the client and API share
+// one origin, so nothing needs configuring. In local development the client runs on Vite (5173)
+// and the API on wrangler (3000), so .dev.vars sets it explicitly.
 const redirectUri = c => c.env.OSU_REDIRECT_URI || `${new URL(c.req.url).origin}/api/auth/callback`;
 
-// 登入完成後要回到哪裡。同一個網址時是空字串（也就是相對路徑 "/"）。
+// Where to send the user after login. Empty string on a shared origin (that is, the relative path "/").
 const frontendUrl = c => c.env.FRONTEND_URL || '';
 
 const auth = new Hono();
@@ -29,8 +30,9 @@ auth.get('/login', c => {
     if (!c.env.OSU_CLIENT_ID) {
         return c.json({ error: 'Login is not configured on the server' }, 500);
     }
-    // state 是防 CSRF 的隨機值：導去 osu! 前先存在 cookie，導回來時比對，
-    // 確保這次授權是我們自己發起的，而不是別人塞給使用者的連結。
+    // state is a random value against CSRF: stored in a cookie before leaving for osu! and compared
+    // on the way back, so we only accept authorizations that we started ourselves, not a link
+    // someone else slipped to the user.
     const state = crypto.randomBytes(16).toString('hex');
     setSealedCookie(c, STATE_COOKIE, 'state', { state }, STATE_TTL_MS);
 
@@ -51,7 +53,7 @@ auth.get('/callback', async c => {
 
     const fail = reason => c.redirect(`${frontendUrl(c)}/?login=${reason}`);
 
-    if (error) return fail('denied'); // 使用者在授權頁按了拒絕
+    if (error) return fail('denied'); // the user declined on the authorization page
     if (typeof code !== 'string' || !saved || saved.state !== state) return fail('invalid');
 
     try {
@@ -83,7 +85,7 @@ auth.get('/callback', async c => {
         });
         return c.redirect(`${frontendUrl(c)}/`);
     } catch (err) {
-        console.error('osu! 登入失敗:', err);
+        console.error('osu! login failed:', err);
         return fail('error');
     }
 });

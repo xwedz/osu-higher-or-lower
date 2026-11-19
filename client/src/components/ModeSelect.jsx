@@ -4,14 +4,14 @@ import { MODES, MODE_KEYS, POOLS, POOL_KEYS, DEFAULT_POOL, loadBest } from '../m
 import Segmented from './Segmented.jsx';
 import UserChip from './UserChip.jsx';
 
-// 只有真的有滑鼠、且沒有開「減少動態效果」時，卡片才會跟著游標傾斜。
+// Cards only tilt toward the cursor when there is a real mouse and reduced motion is off.
 const canTilt = () =>
     window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
     !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
- * 模式卡片：游標移動時卡片朝游標方向微微傾斜，同時有一團粉紅光暈跟著游標走。
- * 傾斜角度與光暈位置都寫成 CSS 變數，不經過 React state。
+ * Mode card: tilts slightly toward the cursor as it moves, with a pink glow that follows the cursor.
+ * The tilt angle and glow position are written as CSS variables, bypassing React state.
  */
 function ModeCard({ index, mode, best, onPlay }) {
     const ref = useRef(null);
@@ -67,7 +67,7 @@ export default function ModeSelect({ state = 'open', user, onLogout, pool, onPoo
                 if (cancelled) return;
                 const info = Object.fromEntries(d.pools.map(p => [p.pool, p]));
                 setPoolInfo(info);
-                // 之前選的池如果現在不能玩，退回預設值。
+                // If the previously chosen pool can't be played now, fall back to the default.
                 if (info[pool] && !info[pool].available) onPoolChange(DEFAULT_POOL);
             })
             .catch(() => {});
@@ -91,7 +91,7 @@ export default function ModeSelect({ state = 'open', user, onLogout, pool, onPoo
             data-state={state}
             className="absolute inset-0 flex animate-fade-in flex-col items-center justify-center gap-4.5 overflow-hidden px-4 py-6 data-[state=closed]:animate-fade-out"
         >
-            {/* 背景光暈 */}
+            {/* Background glows */}
             <div
                 aria-hidden="true"
                 className="pointer-events-none absolute -top-56 -left-56 size-225 rounded-full bg-[radial-gradient(closest-side,rgba(255,102,170,0.22),transparent)]"
@@ -101,7 +101,7 @@ export default function ModeSelect({ state = 'open', user, onLogout, pool, onPoo
                 className="pointer-events-none absolute -right-56 -bottom-56 size-225 rounded-full bg-[radial-gradient(closest-side,rgba(120,90,255,0.2),transparent)]"
             />
 
-            {/* 光圈：外層負責置中，內層負責呼吸動畫，兩者不互相干擾 */}
+            {/* Ring: the outer element centers it and the inner one runs the breathing animation, so they don't interfere */}
             <div
                 aria-hidden="true"
                 className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[58%]"

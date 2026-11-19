@@ -9,13 +9,13 @@ const actionBtn =
     'glass inline-flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-[17px] font-semibold transition-[translate,scale,background-color,border-color,box-shadow] duration-250 ease-out-expo enabled:hover:-translate-y-0.75 enabled:active:translate-y-0 enabled:active:scale-[0.97] stacked:px-2 stacked:py-3 stacked:text-base';
 
 /**
- * pos：相對於目前這一輪的位置。0 = 已知方（左/上），1 = 未知方（右/下），
- * 2 = 還在畫面外等著滑進來，-1 = 已經滑出去。位置變動時靠 CSS transition 做出滑動。
+ * pos: position relative to the current round. 0 = known side (left/top), 1 = unknown side (right/bottom),
+ * 2 = off-screen, waiting to slide in, -1 = already slid out. A CSS transition animates position changes.
  *
  */
 export default function PlayerPanel({ player, pos, mode, known, canGuess, result, onGuess }) {
     const meta = MODES[mode];
-    // 這個 panel 一開始如果沒有數值，代表它是「猜謎對象」，揭曉時要做數字滾動。
+    // A panel that starts without a value is the one being guessed; its number counts up when revealed.
     const [wasHidden] = useState(player.value === undefined);
     const shown = useCountUp(player.value, wasHidden);
 
@@ -27,12 +27,12 @@ export default function PlayerPanel({ player, pos, mode, known, canGuess, result
             aria-hidden={pos < 0 || pos > 1}
             className="absolute top-0 left-0 h-full w-1/2 animate-fade-in overflow-hidden transition-transform duration-700 ease-smooth will-change-transform [transform:translate3d(calc(var(--pos)*100%),0,0)] stacked:h-1/2 stacked:w-full stacked:[transform:translate3d(0,calc(var(--pos)*100%),0)]"
         >
-            {/* 背景：模糊的頭像 */}
+            {/* Background: the blurred avatar */}
             <div
                 className="absolute -inset-[10%] scale-[1.15] bg-cover bg-center blur-[38px] brightness-[0.65] saturate-[1.3]"
                 style={{ backgroundImage: `url(${avatarUrl(player.osuUserId)})` }}
             />
-            {/* 三層遮罩：預設、猜對（綠）、猜錯（紅），用透明度淡入淡出切換 */}
+            {/* Three overlays: default, correct (green), wrong (red), switched by fading their opacity */}
             <div className="absolute inset-0 bg-linear-to-b from-bg/35 to-bg/70" />
             <div className={`absolute inset-0 bg-linear-to-b from-[rgba(20,90,60,0.45)] to-[rgba(10,40,30,0.75)] transition-opacity duration-500 ${result === true ? 'opacity-100' : 'opacity-0'}`} />
             <div className={`absolute inset-0 bg-linear-to-b from-[rgba(120,20,40,0.5)] to-[rgba(50,10,20,0.78)] transition-opacity duration-500 ${result === false ? 'opacity-100' : 'opacity-0'}`} />

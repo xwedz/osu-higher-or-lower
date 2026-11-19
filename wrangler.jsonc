@@ -3,20 +3,20 @@
     "name": "osu-higher-lower",
     "main": "src/index.js",
     "compatibility_date": "2026-09-01",
-    // node:crypto（簽章用的 HMAC）需要這個旗標
+    // node:crypto (HMAC signing) needs this flag
     "compatibility_flags": ["nodejs_compat"],
 
-    // 正式網址。舊的 workers.dev 網址要繼續開著，才能把舊連結（例如 Reddit 貼文）轉址過來；
-    // 有設定 routes 時 workers_dev 可能被推定為 false，所以這裡明確設定。
+    // The production domain. The old workers.dev URL must stay enabled so old links (such as the Reddit post)
+    // can be redirected; with routes set, workers_dev may be inferred as false, so it is set explicitly.
     "routes": [{ "pattern": "osuhigherlower.xwedz.dev", "custom_domain": true }],
     "workers_dev": true,
 
-    // 從 workers.dev 轉址的目標。fork 這個專案的人請改成自己的網址，或拿掉這個設定以停用轉址。
+    // Where workers.dev pages redirect to. If you fork this project, change it to your own URL, or remove it to disable the redirect.
     "vars": { "CANONICAL_ORIGIN": "https://osuhigherlower.xwedz.dev" },
 
-    // 前端（client/dist）。所有請求都先經過 Worker，舊網址的首頁才能被轉址；
-    // 代價是靜態檔案的請求也會計入 Worker 的每日額度。
-    // 其他路徑找不到檔案時回傳 index.html（單頁應用程式）。
+    // The client (client/dist). Every request goes through the Worker first so the old URL's home page can be
+    // redirected; the cost is that static file requests also count toward the Worker's daily quota.
+    // Paths with no matching file return index.html (single-page application).
     "assets": {
         "directory": "./client/dist",
         "binding": "ASSETS",
@@ -28,16 +28,17 @@
         {
             "binding": "DB",
             "database_name": "osu-higher-lower",
-            // 執行 `npx wrangler d1 create osu-higher-lower` 後，把它印出的 database_id 填在這裡。
-            // 本機開發（--local）不會用到這個值，所以先留著佔位也能跑。
+            // After running `npx wrangler d1 create osu-higher-lower`, put the printed database_id here.
+            // Local development (--local) doesn't use this value, so a placeholder works there.
             "database_id": "b81e2b6c-9f0b-46ca-8abf-159e11103f41",
             "migrations_dir": "migrations"
         }
     ],
 
-    // 每個 IP 的頻率限制（Workers Rate Limiting binding）。
-    // 一般玩家一分鐘最多幾十個請求，100 次已經很寬鬆；這個機制是「按資料中心分別計算、寬鬆」的，
-    // 擋得住單一來源猛刷，但不是精準的總量控制。period 只能是 10 或 60 秒。
+    // Per-IP rate limit (Workers Rate Limiting binding).
+    // A normal player makes a few dozen requests a minute at most, so 100 is generous. The limit is loose and
+    // counted per data center: it stops one source from hammering the API, but it isn't an exact total.
+    // period can only be 10 or 60 seconds.
     "ratelimits": [
         {
             "name": "API_LIMITER",
@@ -46,10 +47,10 @@
         }
     ],
 
-    // 每天清一次過期的 UsedToken
+    // Delete expired UsedToken rows once a day
     "triggers": { "crons": ["17 4 * * *"] }
 
-    // 機密值（OSU_CLIENT_ID、OSU_CLIENT_SECRET、ROUND_TOKEN_SECRET）不要寫在這裡：
-    //   本機：放在 .dev.vars（已加入 .gitignore）
-    //   線上：npx wrangler secret put OSU_CLIENT_ID  （其他兩個同理）
+    // Never put secrets (OSU_CLIENT_ID, OSU_CLIENT_SECRET, ROUND_TOKEN_SECRET) here:
+    //   local:      put them in .dev.vars (already in .gitignore)
+    //   production: npx wrangler secret put OSU_CLIENT_ID  (same for the other two)
 }

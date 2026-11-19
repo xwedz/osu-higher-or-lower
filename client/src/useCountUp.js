@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 const easeOutExpo = t => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t));
 
 /**
- * 從 0 數到 target。target 為 undefined 時回傳 undefined（代表還沒揭曉）。
- * enabled 為 false 時直接回傳 target，不做動畫。
+ * Counts from 0 up to target. Returns undefined while target is undefined (not revealed yet).
+ * When enabled is false, returns target directly without animating.
  */
 export default function useCountUp(target, enabled, duration = 1100) {
     const [value, setValue] = useState(enabled ? 0 : target);

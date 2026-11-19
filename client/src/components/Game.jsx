@@ -25,24 +25,24 @@ const cardBtn =
 
 export default function Game({ state = 'open', mode, pool, onExit, onShowLeaderboard }) {
     const meta = MODES[mode];
-    const [panels, setPanels] = useState([]);  // 每位出現過的玩家，index 即順序
-    const [runKey, setRunKey] = useState(0);   // 每次開新局 +1，讓舊的玩家卡片整批換掉（並重新淡入）
-    const [cur, setCur] = useState(0);         // panels[cur] 是已知方，panels[cur+1] 是未知方
+    const [panels, setPanels] = useState([]);  // every player shown so far, in order
+    const [runKey, setRunKey] = useState(0);   // +1 on each new run so all old cards are replaced (and fade in again)
+    const [cur, setCur] = useState(0);         // panels[cur] is the known side, panels[cur+1] the unknown side
     const [token, setToken] = useState(null);
     const [streak, setStreak] = useState(0);
     const [phase, setPhase] = useState('loading'); // loading | guessing | submitting | revealing | over | error
-    const [result, setResult] = useState(null);    // 最近一次猜測 true/false
+    const [result, setResult] = useState(null);    // the latest guess result, true/false
     const [error, setError] = useState('');
     const [best, setBest] = useState(() => loadBest(mode, pool));
     const [newRecord, setNewRecord] = useState(false);
-    const [ranked, setRanked] = useState(false); // 這一局是不是登入狀態下開始的（只有這種局會進排行榜）
+    const [ranked, setRanked] = useState(false); // whether this run started while logged in (only those reach the leaderboard)
     const alive = useRef(true);
     const runId = useRef(0);
 
     const begin = useCallback(async () => {
         const id = ++runId.current;
-        // 先只切到 loading：載入遮罩會淡入蓋住畫面，等新的一局準備好才在遮罩底下換內容，
-        // 這樣「再玩一次」時舊畫面不會突然被換掉。
+        // Switch to loading first: the loading overlay fades in over the screen, and the content
+        // underneath is only swapped once the new run is ready, so "Play again" never snaps the old screen away.
         setPhase('loading');
         setError('');
         try {
@@ -79,7 +79,7 @@ export default function Game({ state = 'open', mode, pool, onExit, onShowLeaderb
             const res = await submitGuess(token, guess);
             if (!alive.current || id !== runId.current) return;
 
-            // 揭曉：把真正的數值填進未知方，數字會自己滾動。
+            // Reveal: put the real value on the unknown side; the number counts up on its own.
             setPanels(ps => ps.map((p, i) => (i === cur + 1 ? { ...p, value: res.unknown.value } : p)));
             setResult(res.correct);
             setPhase('revealing');
@@ -98,12 +98,12 @@ export default function Game({ state = 'open', mode, pool, onExit, onShowLeaderb
             setBest(b => Math.max(b, res.streak));
             saveBest(mode, pool, res.streak);
             setToken(res.nextRound.roundToken);
-            // 趁揭曉動畫的時間先把下一位的頭像載好，滑進來時才不會閃一下。
+            // Preload the next player's avatar during the reveal animation so it doesn't flash when it slides in.
             const ready = preload(res.nextRound.unknown.osuUserId);
             await Promise.all([sleep(1700), ready]);
             if (!alive.current || id !== runId.current) return;
 
-            // 先把新玩家放在畫面外（位置 +2），下一個 frame 才推進 cur，才會有滑動動畫。
+            // Place the new player off-screen first (position +2) and advance cur on the next frame, so it slides in.
             setPanels(ps => [...ps, { ...res.nextRound.unknown }]);
             await nextFrame();
             if (!alive.current || id !== runId.current) return;
@@ -119,7 +119,7 @@ export default function Game({ state = 'open', mode, pool, onExit, onShowLeaderb
         }
     }, [phase, token, cur, mode, pool]);
 
-    // 鍵盤操作：↑ 更高、↓ 更低、Esc 離開。整個畫面正在淡出時不再接受操作。
+    // Keyboard: ↑ higher, ↓ lower, Esc to leave. Input is ignored while the screen is fading out.
     useEffect(() => {
         const onKey = e => {
             if (state === 'closed') return;
@@ -139,7 +139,7 @@ export default function Game({ state = 'open', mode, pool, onExit, onShowLeaderb
             data-state={state}
             className="absolute inset-0 animate-fade-in overflow-hidden bg-bg data-[state=closed]:animate-fade-out"
         >
-            {/* 猜對／猜錯時畫面邊緣閃一下光。key 讓每一次新的結果都重新播放。 */}
+            {/* Flash the screen edges on a right/wrong guess. The key makes every new result replay it. */}
             {result !== null && (
                 <div
                     key={`${streak}-${result}`}
